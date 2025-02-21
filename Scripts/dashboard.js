@@ -1,3 +1,7 @@
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.x.x/firebase-firestore.js";
+
+const db = getFirestore(app);
+
 if (window.location.pathname.includes("dashboard.html")) {
     const sleepForm = document.getElementById("sleepForm");
     const sleepDataList = document.getElementById("sleepDataList");
