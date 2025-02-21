@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Monitoring - Dashboard</title>
+    <link rel="stylesheet" href="Styles/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <h2>Welcome to Sleep Monitoring</h2>
+        <form id="sleepForm">
+            <input type="date" id="sleepDate" required>
+            <input type="time" id="sleepTime" required>
+            <input type="time" id="wakeTime" required>
+            <button type="submit">Add Sleep Data</button>
+        </form>
+        <h3>Sleep Data:</h3>
+        <ul id="sleepDataList"></ul>
+    </div>
+    <script src="Scripts/dashboard.js"></script>
+</body>
+</html>

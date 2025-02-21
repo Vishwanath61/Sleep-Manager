@@ -6,7 +6,7 @@ document.getElementById("loginForm").addEventListener("submit", function(event) 
 
     // Hardcoded credentials (change these to your preferred values)
     const hardcodedUsername = "admin";
-    const hardcodedPassword = "123";
+    const hardcodedPassword = "vishwa61";
 
     if (username === hardcodedUsername && password === hardcodedPassword) {
         alert("Login successful!");
