@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Monitoring - Analysis</title>
+    <link rel="stylesheet" href="Styles/dashboard.css">
+    <!-- Load Chart.js globally -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="analysis.html">Analysis</a></li>
+        </ul>
+    </nav>
+
+    <div class="dashboard-container">
+        <h2>Sleep Analysis</h2>
+        <canvas id="overallAverageChart"></canvas>
+        <canvas id="dailyAverageChart"></canvas>
+    </div>
+
+    <!-- Load analysis.js as a module -->
+    <script type="module" src="Scripts/analysis.js"></script>
+</body>
+</html>
