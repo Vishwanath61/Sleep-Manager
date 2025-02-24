@@ -17,6 +17,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Function to Convert Minutes to Hours, Minutes, and Seconds
+const formatTimeDetailed = (hours) => {
+    const totalSeconds = Math.floor(hours * 3600);
+    const hrs = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hrs}h ${mins}m ${secs}s`;
+};
+
 // Calculate and Display Data
 const fetchAndDisplayData = async () => {
     try {
@@ -27,51 +36,59 @@ const fetchAndDisplayData = async () => {
             sleepData.push(doc.data());
         });
 
-        // Calculate Averages
+        // Calculate Averages with Correct Day Handling and Multiple Naps
         const calculateAverages = (data) => {
-            const totalDuration = data.reduce((acc, curr) => {
-                const [hrs, mins] = curr.duration.split('h ');
-                const totalMins = (parseInt(hrs) * 60) + parseInt(mins.replace('m', ''));
-                return acc + totalMins;
-            }, 0);
-
-            const overallAvg = (totalDuration / data.length) / 60;
-
             const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dailyTotals = {};
             const dailyAverages = Array(7).fill(0);
             const dayCounts = Array(7).fill(0);
 
             data.forEach(item => {
-                const sleepDate = new Date(`${item.sleepDate}T${item.sleepTime}`);
-                const day = sleepDate.getDay();
-                const [hrs, mins] = item.duration.split('h ');
-                const totalMins = (parseInt(hrs) * 60) + parseInt(mins.replace('m', ''));
+                const sleepStart = new Date(`${item.sleepDate}T${item.sleepTime}`);
+                const wakeUp = new Date(`${item.wakeDate}T${item.wakeTime}`);
 
-                dailyAverages[day] += totalMins;
+                // If sleep crosses midnight, adjust the date for wake-up
+                if (wakeUp < sleepStart) {
+                    wakeUp.setDate(wakeUp.getDate() + 1);
+                }
+
+                const sleepDuration = (wakeUp - sleepStart) / (1000 * 60); // Convert milliseconds to minutes
+                
+                // Group by sleepDate for daily totals
+                const sleepDayKey = item.sleepDate;
+
+                if (!dailyTotals[sleepDayKey]) {
+                    dailyTotals[sleepDayKey] = 0;
+                }
+                dailyTotals[sleepDayKey] += sleepDuration;
+            });
+
+            // Calculate Daily Averages
+            Object.entries(dailyTotals).forEach(([date, totalMinutes]) => {
+                const day = new Date(date).getDay();
+                dailyAverages[day] += totalMinutes;
                 dayCounts[day]++;
             });
 
             const dailyAvgHours = dailyAverages.map((total, index) => 
-                dayCounts[index] > 0 ? (total / dayCounts[index]) : 0
+                dayCounts[index] > 0 ? (total / dayCounts[index]) / 60 : 0
             );
+
+            // Calculate Overall Average
+            const totalSleepMinutes = Object.values(dailyTotals).reduce((acc, curr) => acc + curr, 0);
+            const totalDays = Object.keys(dailyTotals).length;
+            const overallAvg = (totalSleepMinutes / totalDays) / 60; // Convert minutes to hours
 
             return { overallAvg, dailyAvgHours, daysOfWeek };
         };
 
         const { overallAvg, dailyAvgHours, daysOfWeek } = calculateAverages(sleepData);
 
-        // Function to Convert Minutes to Hours and Minutes
-        const formatTime = (minutes) => {
-            const hrs = Math.floor(minutes / 60);
-            const mins = minutes % 60;
-            return `${hrs}h ${mins}m`;
-        };
-
-        // Display Charts
+        // Doughnut Chart for Overall Average (in hrs, min, sec)
         new Chart(document.getElementById('overallAverageChart').getContext('2d'), {
             type: 'doughnut',
             data: {
-                labels: ['Average Sleep (hrs)'],
+                labels: [formatTimeDetailed(overallAvg)],
                 datasets: [{
                     data: [overallAvg.toFixed(2)],
                     backgroundColor: ['#36A2EB']
@@ -84,12 +101,13 @@ const fetchAndDisplayData = async () => {
             }
         });
 
+        // Bar Chart for Daily Averages
         new Chart(document.getElementById('dailyAverageChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: daysOfWeek,
                 datasets: [{
-                    label: 'Avg Sleep',
+                    label: 'Avg Sleep (hrs)',
                     data: dailyAvgHours,
                     backgroundColor: '#4BC0C0'
                 }]
@@ -100,9 +118,7 @@ const fetchAndDisplayData = async () => {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                const hrs = Math.floor(value / 60);
-                                const mins = value % 60;
-                                return `${hrs}h ${mins}m`;
+                                return `${value.toFixed(1)} hrs`;
                             }
                         }
                     }
@@ -112,15 +128,9 @@ const fetchAndDisplayData = async () => {
                         callbacks: {
                             label: function(context) {
                                 const value = context.raw;
-                                return `Avg Sleep: ${formatTime(value)}`;
+                                return `Avg Sleep: ${formatTimeDetailed(value)}`;
                             }
                         }
-                    },
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: (value) => formatTime(value),
-                        color: '#000'
                     }
                 }
             }
